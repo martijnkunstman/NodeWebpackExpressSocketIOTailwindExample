@@ -1,6 +1,7 @@
 import io from "socket.io-client";
 
 var socket = io();
+//socket connects
 var canvas = document.getElementsByClassName("whiteboard")[0];
 var colors = document.getElementsByClassName("color");
 var context = canvas.getContext("2d");
@@ -118,4 +119,50 @@ function onDrawingEvent(data) {
 function onResize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+}
+
+//---------------------------
+
+var grid = document.getElementsByClassName("grid")[0];
+
+fetch("/imagedata")
+  .then((response) => {
+    return response.json();
+  })
+  .then((data) => {
+    //console.log(data);
+    for (let i = 0; i < 100; i++) {
+      var cell = document.createElement("div");
+      cell.className = "gridItem";
+      cell.id = "cell" + i;
+      if (data[i] == 1) {
+        cell.style.backgroundColor = "black";
+      } else {
+        cell.style.backgroundColor = "white";
+      }
+      cell.addEventListener("click", function (e) {
+        if (e.target.style.backgroundColor === "black") {
+          e.target.style.backgroundColor = "white";
+          socket.emit("gridUpdate", { cell: i, color: 0 });
+        } else {
+          e.target.style.backgroundColor = "black";
+          socket.emit("gridUpdate", { cell: i, color: 1 });
+        }
+      });
+      grid.appendChild(cell);
+    }
+  });
+
+socket.on("gridUpdate", gridUpdate);
+
+function gridUpdate(data) {
+  //console.log("gridUpdate");
+  //console.log(data.imageData);
+  for (let i = 0; i < 100; i++) {
+    if (data.imageData[i] == 1) {
+      document.getElementById("cell" + i).style.backgroundColor = "black";
+    } else {
+      document.getElementById("cell" + i).style.backgroundColor = "white";
+    }
+  }
 }
